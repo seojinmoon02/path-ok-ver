@@ -131,6 +131,98 @@
             font-weight: 600;
             color: var(--accent);
         }
+
+                /* --- Trip title navigation --- */
+        #tripNav{
+        display:flex;
+        align-items:baseline;
+        gap:10px;
+        }
+
+        .navArrow{
+        width:34px;
+        height:34px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:999px;
+        border:1px solid var(--border-soft);
+        background:#fff;
+        color:var(--accent);
+        cursor:pointer;
+        box-shadow:none;
+        font-size:18px;
+        line-height:1;
+        padding:0;
+        transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+        }
+        .navArrow:hover{
+        background:var(--accent-soft);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .navArrow:active{
+        transform: translateY(0);
+        box-shadow:none;
+        }
+
+        /* --- Make canvas visually match UI width (desktop) --- */
+        main{
+        width: min(700px, 95vw);
+        display:flex;
+        justify-content:center;
+        }
+        main canvas{
+        width:100%;
+        height:auto;
+        }
+
+        /* --- Mobile: prevent scrolling (only on small screens) --- */
+        @media (max-width: 600px){
+        html, body{
+            height:100%;
+            overflow:hidden;
+        }
+        main{ margin-top: 10px; }
+        }
+
+        /* --- Custom cursor (marker tip style) --- */
+body, button, select, canvas{
+  cursor: url("./assets/cursor-marker.svg") 8 20, auto;
+}
+
+
+
+        .ink{
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(239,65,54,0.75);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        animation: inkSpread 0.45s ease-out forwards;
+        z-index: 9998;
+        }
+
+        @keyframes inkSpread{
+        from{
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 0.6;
+        }
+        to{
+            transform: translate(-50%, -50%) scale(2.6);
+            opacity: 0;
+        }
+        }
+
+
+
+
+
+
     </style>
 
 </head>
@@ -140,16 +232,12 @@
 
     <div id="ui">
         <div id="topRow">
-            <div>
-                <div id="levelTitle">TRIP 0?</div>
-                <!-- ★ Level Selector 추가 -->
-                <select id="levelSelect"
-                    style="margin-left:8px; padding:2px 6px; font-size:14px; border-radius:4px; border:1px solid #ddd;">
-                    <!-- Options populated by JS -->
-                </select>
+            <div id="tripNav">
+                <button id="prevTrip" class="navArrow" aria-label="Previous trip">‹</button>
+                <div id="levelTitle">TRIP 01</div>
+                <button id="nextTrip" class="navArrow" aria-label="Next trip">›</button>
             </div>
             <div id="buttons">
-                <button id="backBtn" class="secondary">← Back</button>
                 <button id="resetBtn" class="secondary">Reset</button>
                 <button id="undoBtn" class="secondary">Undo</button> <!-- ★ 추가 -->
                 <button id="langBtn" class="secondary">EN</button>
@@ -186,9 +274,9 @@
         • Click nearby points to draw your route across the grid.<br>
         • Move up, down, left, right, or diagonally.<br>
         • Double-click to break the route — the next move becomes a leap (J).<br>
-        • Press <b>Check Route</b> when you're done exploring.
+        • Press <b>Check Answer</b> when you're done exploring.
         `,
-                trip: n => `TRIP ${n} (Shape)`
+                trip: n => `TRIP ${String(n).padStart(2, "0")}`
             },
 
             kr: {
@@ -209,7 +297,7 @@
         • 더블클릭하면 길이 끊어지며, 다음 이동은 점프(J)가 됩니다.<br>
         • 탐험을 마치면 <b>정답 확인</b> 버튼을 눌러보세요.
         `,
-                trip: n => `TRIP ${n} (Shape)`
+                trip: n => `TRIP ${String(n).padStart(2, "0")}`
             }
         };
 
@@ -316,7 +404,7 @@
 
         let level = 1;
 
-        let statusDiv, backBtn, resetBtn, checkBtn, levelTitle, undoBtn, langBtn, levelSelect;
+        let statusDiv, backBtn, resetBtn, checkBtn, levelTitle, undoBtn, langBtn;
         let resultMode = null; // "correct" | "wrong" | null
         let resultTimer = 0;
         let confetti = [];
@@ -327,23 +415,25 @@
         // ====== P5 SETUP / DRAW ======
 
 
-
         function updateCanvasSize() {
-            // 화면 가로/세로에 맞춰 캔버스 한 변 길이 계산
-            const sizeByWidth = windowWidth * 1.0;   // 좌우 여백 10%
-            const sizeByHeight = windowHeight * 0.55; // 아래 UI 영역 남겨두기
+            const uiEl = document.getElementById("ui");
+            const uiW = uiEl ? uiEl.getBoundingClientRect().width : windowWidth * 0.95;
+
+            // 모바일은 기존처럼, 데스크탑은 높이 제한을 완화해서 UI 폭까지 키움
+            const isMobile = windowWidth <= 600;
+            const sizeByWidth = uiW;                 // 버튼/설명 폭과 캔버스 폭 맞춤
+            const sizeByHeight = windowHeight * (isMobile ? 0.55 : 0.78);
 
             canvasSize = Math.min(BASE_CANVAS_SIZE, sizeByWidth, sizeByHeight);
 
-            // 마진도 비율대로 줄이기
             gridMargin = (BASE_MARGIN / BASE_CANVAS_SIZE) * canvasSize;
 
             resizeCanvas(canvasSize, canvasSize);
 
-            // spacing & 포인트 좌표 갱신
             spacing = (canvasSize - 2 * gridMargin) / (GRID_SIZE - 1);
             initGrid();
         }
+
 
         function setup() {
             // 일단 임시 크기로 만든 뒤, updateCanvasSize에서 실제 크기 맞추기
@@ -363,11 +453,12 @@
         function draw() {
             background('#ef4136');
             drawGrid();
+            drawBoardLabels(); 
             // ★ Filled Shape (if correct)
             drawFilledShape();
             drawSegments();
             drawPoints();
-            drawStartMarker();
+            //drawStartMarker();
             drawResultOverlay();
             drawConfetti();
         }
@@ -381,7 +472,6 @@
 
         function cacheDom() {
             statusDiv = document.getElementById("status");
-            backBtn = document.getElementById("backBtn");
             resetBtn = document.getElementById("resetBtn");
             checkBtn = document.getElementById("checkBtn");
             levelTitle = document.getElementById("levelTitle");
@@ -389,10 +479,6 @@
 
             const L = LANG[currentLang];
             levelTitle.textContent = L.trip(level);
-
-            backBtn.addEventListener("click", () => {
-                window.location.href = "landing.html";
-            });
 
             resetBtn.addEventListener("click", () => {
                 initGameState();
@@ -421,31 +507,24 @@
                 applyLanguage();
             });
 
-            // ★ Level Select Logic
-            levelSelect = document.getElementById("levelSelect");
+            const prevTrip = document.getElementById("prevTrip");
+            const nextTrip = document.getElementById("nextTrip");
 
-            // Populate options (1 to 12)
-            for (let i = 1; i <= 12; i++) {
-                const opt = document.createElement("option");
-                opt.value = i;
-                opt.textContent = `Lv ${i}`;
-                if (i === level) opt.selected = true;
-                levelSelect.appendChild(opt);
+            function goLevel(newLv){
+            newLv = Math.max(1, Math.min(12, newLv));
+            if (newLv === level) return;
+            level = newLv;
+
+            const url = new URL(window.location);
+            url.searchParams.set("level", level);
+            window.history.pushState({}, "", url);
+
+            initGameState();
             }
 
-            // Handle change
-            levelSelect.addEventListener("change", (e) => {
-                const newLv = parseInt(e.target.value, 10);
-                if (newLv !== level) {
-                    level = newLv;
-                    // Update URL
-                    const url = new URL(window.location);
-                    url.searchParams.set("level", level);
-                    window.history.pushState({}, "", url);
+            prevTrip.addEventListener("click", () => goLevel(level - 1));
+            nextTrip.addEventListener("click", () => goLevel(level + 1));
 
-                    initGameState();
-                }
-            });
         }
 
         function applyLanguage() {
@@ -971,6 +1050,51 @@
             pop();
         }
 
+        function drawBoardLabels(){
+            push();
+
+            // ✅ 스타일 (SVG처럼 얇고 미세한 느낌)
+            fill('#ffffff');       // #EF4136
+            noStroke();
+            textAlign(CENTER, CENTER);
+
+            // 캔버스 크기에 따라 글자 크기 자동 (너무 크지 않게)
+            const fs = Math.max(9, Math.min(14, canvasSize * 0.02));
+            textSize(fs);
+            textStyle(NORMAL);
+
+            // ✅ 라벨 개수: 내부 셀 9개 느낌 (가장자리 한 칸 제외)
+            const count = GRID_SIZE - 2; // 11 -> 9
+
+            // 라벨이 그리드 바깥으로 살짝 나가게 위치 오프셋
+            const out = Math.max(14, gridMargin * 0.5);
+
+            // 내부 9칸의 중앙 좌표 (k=0..8)
+            // gridMargin + spacing*(k+1) 위치에 찍혀 있는 점 라인이므로,
+            // 라벨은 그 점 기준으로 배치하면 SVG 느낌이 잘 나와.
+            for(let k=0; k<count; k++){
+                const n = String(k + 1).padStart(2, "0");
+
+                const x = gridMargin + (k + 1) * spacing;
+                const y = gridMargin + (k + 1) * spacing;
+
+                // TOP: B-01..B-09
+                text(`B-${n}`, x, gridMargin - out);
+
+                // BOTTOM: D-01..D-09
+                text(`D-${n}`, x, height - gridMargin + out);
+
+                // LEFT: A-01..A-09
+                text(`A-${n}`, gridMargin - out, y);
+
+                // RIGHT: C-01..C-09
+                text(`C-${n}`, width - gridMargin + out, y);
+            }
+
+            pop();
+            }
+
+
 
         function drawStartMarker() {
             if (!startPoint) return;
@@ -1150,7 +1274,18 @@
             }
         }
 
+        window.addEventListener("mousedown", (e) => {
+        const ink = document.createElement("div");
+        ink.className = "ink";
+        ink.style.left = e.clientX + "px";
+        ink.style.top = e.clientY + "px";
+        document.body.appendChild(ink);
+        ink.addEventListener("animationend", () => ink.remove());
+        });
+
+
     </script>
+
 </body>
 
 </html>
