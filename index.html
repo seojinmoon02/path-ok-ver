@@ -997,16 +997,16 @@ body, button, select, canvas{
             strokeWeight(1);
             drawingContext.setLineDash([4, 4]); // [선 길이, 공백 길이]
 
-            // 가로선
-            for (let i = 0; i < GRID_SIZE; i++) {
-                const y = gridMargin + i * spacing;
-                line(gridMargin, y, width - gridMargin, y);
+            // 가로선 (맨 위/아래 제외)
+            for (let i = 1; i < GRID_SIZE - 1; i++) {
+            const y = gridMargin + i * spacing;
+            line(gridMargin, y, width - gridMargin, y);
             }
 
-            // 세로선
-            for (let j = 0; j < GRID_SIZE; j++) {
-                const x = gridMargin + j * spacing;
-                line(x, gridMargin, x, height - gridMargin);
+            // 세로선 (맨 왼쪽/오른쪽 제외)
+            for (let j = 1; j < GRID_SIZE - 1; j++) {
+            const x = gridMargin + j * spacing;
+            line(x, gridMargin, x, height - gridMargin);
             }
 
             // ✅ 다른 그리기에는 점선 안 먹도록 리셋
