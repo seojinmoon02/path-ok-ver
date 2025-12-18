@@ -1,1291 +1,1091 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8" />
-    <title>Code Path – Game (Shape Match)</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.min.js"></script>
-    <style>
-        :root {
-            --accent: #ef4136;
-            --accent-soft: #fef4f3;
-            --text-main: #111827;
-            --text-sub: #6b7280;
-            --border-soft: #e5e7eb;
-        }
+  <meta charset="UTF-8" />
+  <title>Code Path – Game (Shape Match)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.min.js"></script>
 
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #ffffff;
-            color: var(--text-main);
-        }
+  <style>
+    :root {
+      --accent: #ef4136;
+      --accent-soft: #fef4f3;
+      --text-main: #111827;
+      --text-sub: #6b7280;
+      --border-soft: #e5e7eb;
+    }
 
-        /* 캔버스 영역 – 비율/사이즈는 그대로, 외곽선만 SVG 스타일 */
-        main {
-            margin-top: 18px;
-        }
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #ffffff;
+      color: var(--text-main);
+    }
 
-        main canvas {
-            background: #ffffff;
-            box-shadow: 0 0 0 1px #ffffff, 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-radius: 4px;
-        }
+    /* --- Make canvas visually match UI width --- */
+    main {
+      margin-top: 18px;
+      width: min(700px, 95vw);
+      display: flex;
+      justify-content: center;
+    }
 
-        #ui {
-            width: 700px;
-            max-width: 95vw;
-            margin-top: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            font-size: 14px;
-        }
+    main canvas {
+      width: 100%;
+      height: auto;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px #ffffff, 0 2px 8px rgba(0,0,0,0.08);
+      border-radius: 4px;
+      display: block;
+    }
 
-        #topRow {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 6px;
-        }
+    #ui {
+      width: 700px;
+      max-width: 95vw;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 14px;
+    }
 
-        #levelTitle {
-            font-weight: 700;
-            font-size: 18px;
-            letter-spacing: 0.02em;
-            color: var(--accent);
-        }
+    #topRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+    }
 
-        #buttons {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
+    #tripNav {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
 
-        button {
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: 1px solid var(--accent);
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            background: var(--accent);
-            color: #ffffff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-            white-space: nowrap;
-            transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease,
-                transform 0.08s ease;
-        }
+    #levelTitle {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+    }
 
-        button.secondary {
-            background: #ffffff;
-            color: var(--accent);
-            box-shadow: none;
-        }
+    .navArrow {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: #fff;
+      color: var(--accent);
+      cursor: pointer;
+      box-shadow: none;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+    }
+    .navArrow:hover {
+      background: var(--accent-soft);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .navArrow:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
 
-        button:hover {
-            filter: none;
-            background: #ff5c4e;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
-            transform: translateY(-1px);
-        }
+    #buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
 
-        button.secondary:hover {
-            background: var(--accent-soft);
-            color: var(--accent);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-        }
+    button {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      white-space: nowrap;
+      transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+    }
 
-        button:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-        }
+    button.secondary {
+      background: #ffffff;
+      color: var(--accent);
+      box-shadow: none;
+    }
 
-        #status {
-            padding: 6px 10px;
-            background: #ffffff;
-            border-radius: 6px;
-            border: 1px solid var(--border-soft);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-            color: var(--text-sub);
-        }
+    button:hover {
+      background: #ff5c4e;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+      transform: translateY(-1px);
+    }
+    button.secondary:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
 
-        #instructions {
-            padding: 8px 10px;
-            background: var(--accent-soft);
-            border-radius: 6px;
-            border: 1px solid var(--accent);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-            line-height: 1.5;
-            color: var(--text-main);
-        }
+    #status {
+      padding: 6px 10px;
+      background: #ffffff;
+      border-radius: 6px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      color: var(--text-sub);
+    }
 
-        #instructions b {
-            font-weight: 600;
-            color: var(--accent);
-        }
+    #instructions {
+      padding: 8px 10px;
+      background: var(--accent-soft);
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      line-height: 1.5;
+      color: var(--text-main);
+    }
+    #instructions b {
+      font-weight: 600;
+      color: var(--accent);
+    }
 
-                /* --- Trip title navigation --- */
-        #tripNav{
-        display:flex;
-        align-items:baseline;
-        gap:10px;
-        }
+    /* --- Mobile: prevent scrolling (only on small screens) --- */
+    @media (max-width: 600px){
+      html, body { height: 100%; overflow: hidden; }
+      main { margin-top: 10px; }
+    }
 
-        .navArrow{
-        width:34px;
-        height:34px;
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        border-radius:999px;
-        border:1px solid var(--border-soft);
-        background:#fff;
-        color:var(--accent);
-        cursor:pointer;
-        box-shadow:none;
-        font-size:18px;
-        line-height:1;
-        padding:0;
-        transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
-        }
-        .navArrow:hover{
-        background:var(--accent-soft);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-        }
-        .navArrow:active{
-        transform: translateY(0);
-        box-shadow:none;
-        }
+    /* --- Custom cursor --- */
+    body, button, select, canvas {
+      cursor: url("./assets/cursor-marker.svg") 8 20, auto;
+    }
 
-        /* --- Make canvas visually match UI width (desktop) --- */
-        main{
-        width: min(700px, 95vw);
-        display:flex;
-        justify-content:center;
-        }
-        main canvas{
-        width:100%;
-        height:auto;
-        }
+    /* --- Ink click effect --- */
+    .ink {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(239,65,54,0.75);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: inkSpread 0.45s ease-out forwards;
+      z-index: 9998;
+    }
+    @keyframes inkSpread {
+      from { transform: translate(-50%, -50%) scale(0.5); opacity: 0.6; }
+      to   { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+    }
 
-        /* --- Mobile: prevent scrolling (only on small screens) --- */
-        @media (max-width: 600px){
-        html, body{
-            height:100%;
-            overflow:hidden;
-        }
-        main{ margin-top: 10px; }
-        }
+    /* --- Result card overlay (USED) --- */
+    #resultOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+    #resultOverlay.show { display: flex; }
+    #resultOverlay img {
+      width: min(420px, 80vw);
+      height: auto;
+      border-radius: 12px;
+      display: block;
+    }
 
-        /* --- Custom cursor (marker tip style) --- */
-body, button, select, canvas{
-  cursor: url("./assets/cursor-marker.svg") 8 20, auto;
+    /* --- Large desktop (iMac-class) scaling only --- */
+@media (min-width: 2400px) and (min-height: 1200px){
+  #ui{
+    width: 880px;        /* 700 -> 880 */
+    font-size: 16px;     /* 기본 글자 약간 확대 */
+  }
+
+  #levelTitle{
+    font-size: 22px;     /* 18 -> 22 */
+  }
+
+  button{
+    font-size: 16px;     /* 14 -> 16 */
+    padding: 8px 14px;   /* 살짝 확대 */
+  }
+
+  #status{
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  #instructions{
+    font-size: 16px;
+    padding: 12px 12px;
+    line-height: 1.6;
+  }
+
+  main{
+    width: min(880px, 95vw); /* 캔버스도 같이 커짐(폭 기준) */
+  }
 }
 
-
-
-        .ink{
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: rgba(239,65,54,0.75);
-        transform: translate(-50%, -50%);
-        pointer-events: none;
-        animation: inkSpread 0.45s ease-out forwards;
-        z-index: 9998;
-        }
-
-        @keyframes inkSpread{
-        from{
-            transform: translate(-50%, -50%) scale(0.5);
-            opacity: 0.6;
-        }
-        to{
-            transform: translate(-50%, -50%) scale(2.6);
-            opacity: 0;
-        }
-        }
-
-
-
-
-
-
-    </style>
-
+  </style>
 </head>
 
 <body>
-    <main></main>
+  <main></main>
 
-    <div id="ui">
-        <div id="topRow">
-            <div id="tripNav">
-                <button id="prevTrip" class="navArrow" aria-label="Previous trip">‹</button>
-                <div id="levelTitle">TRIP 01</div>
-                <button id="nextTrip" class="navArrow" aria-label="Next trip">›</button>
-            </div>
-            <div id="buttons">
-                <button id="resetBtn" class="secondary">Reset</button>
-                <button id="undoBtn" class="secondary">Undo</button> <!-- ★ 추가 -->
-                <button id="langBtn" class="secondary">EN</button>
-                <button id="checkBtn">Check Answer</button>
-            </div>
-        </div>
+  <div id="ui">
+    <div id="topRow">
+      <div id="tripNav">
+        <button id="prevTrip" class="navArrow" aria-label="Previous trip">‹</button>
+        <div id="levelTitle">TRIP 01</div>
+        <button id="nextTrip" class="navArrow" aria-label="Next trip">›</button>
+      </div>
 
-        <div id="status">Start from the START point and draw your path.</div>
-
-        <div id="instructions">
-            <b>Mouse Controls</b><br>
-            - Click an adjacent point to extend your path from START.<br>
-            - You can only move up, down, left, right, or diagonally.<br>
-            - Double-click to break the line; the next point becomes a jump (J).<br>
-            - After finishing your route, press <b>Check Answer</b>.
-        </div>
+      <div id="buttons">
+        <button id="resetBtn" class="secondary">Reset</button>
+        <button id="undoBtn" class="secondary">Undo</button>
+        <button id="langBtn" class="secondary">EN</button>
+        <button id="checkBtn">Check Answer</button>
+      </div>
     </div>
 
-    <script>
-        const LANG = {
-            en: {
-                status: {
-                    start: "Begin your journey from the START marker. Chart your path across the grid.",
-                    reset: "Your route has been cleared. You’re ready to set off again.",
-                    split: "Path split — your next move will become a leap (J).",
-                    nearOnly: "You can only travel to nearby points. Try a step within reach.",
-                    noAnswer: "No official route is set for this TRIP yet.",
-                    correct: "Journey complete! 🎉 Your path matches the official route (Shape Match).",
-                    wrong: "This route doesn’t match the official path. Try exploring again.",
-                    undo: "Your last step has been undone."
-                },
-                instructions: `
-        <b>Mouse Controls</b><br>
-        • Click nearby points to draw your route across the grid.<br>
-        • Move up, down, left, right, or diagonally.<br>
-        • Double-click to break the route — the next move becomes a leap (J).<br>
-        • Press <b>Check Answer</b> when you're done exploring.
+    <div id="status">Start from the START point and draw your path.</div>
+
+    <div id="instructions">
+      <b>Mouse Controls</b><br>
+      - Click an adjacent point to extend your path from START.<br>
+      - You can only move up, down, left, right, or diagonally.<br>
+      - Double-click to break the line; the next point becomes a jump (J).<br>
+      - After finishing your route, press <b>Check Answer</b>.
+    </div>
+  </div>
+
+  <!-- 정답 카드 오버레이 (현재 로직에서 사용 중) -->
+  <div id="resultOverlay">
+    <img alt="result card">
+  </div>
+
+  <script>
+    "use strict";
+
+    // ====== I18N ======
+    const LANG = {
+      en: {
+        status: {
+          start: "Begin your journey from the START marker. Chart your path across the grid.",
+          reset: "Your route has been cleared. You’re ready to set off again.",
+          split: "Path split — your next move will become a leap (J).",
+          nearOnly: "You can only travel to nearby points. Try a step within reach.",
+          noAnswer: "No official route is set for this TRIP yet.",
+          correct: "Journey complete! 🎉 Your path matches the official route (Shape Match).",
+          wrong: "This route doesn’t match the official path. Try exploring again.",
+          undo: "Your last step has been undone."
+        },
+        instructions: `
+          <b>Mouse Controls</b><br>
+          • Click nearby points to draw your route across the grid.<br>
+          • Move up, down, left, right, or diagonally.<br>
+          • Double-click to break the route — the next move becomes a leap (J).<br>
+          • Press <b>Check Answer</b> when you're done exploring.
         `,
-                trip: n => `TRIP ${String(n).padStart(2, "0")}`
-            },
+        trip: n => `TRIP ${String(n).padStart(2, "0")}`
+      },
 
-            kr: {
-                status: {
-                    start: "START 지점에서 당신의 여정을 시작하세요. 그리드를 따라 길을 개척해보세요.",
-                    reset: "경로가 초기화되었습니다. 다시 여정을 시작할 수 있어요.",
-                    split: "선이 끊겼습니다. 다음 점부터 점프(J) 구간으로 인식됩니다.",
-                    nearOnly: "인접한 점(상하좌우/대각선)으로만 이동할 수 있습니다.",
-                    noAnswer: "이 TRIP은 아직 정답 경로가 설정되지 않았습니다.",
-                    correct: "여정 완료! 🎉 당신의 경로가 정답과 일치합니다 (모양 일치).",
-                    wrong: "이 경로는 정답과 일치하지 않아요. 다시 탐험해보세요.",
-                    undo: "마지막 움직임을 취소했습니다."
-                },
-                instructions: `
-        <b>마우스 조작</b><br>
-        • 인접한 점들을 클릭해 그리드 위에 여정을 그립니다.<br>
-        • 상하좌우 및 대각선으로 이동할 수 있어요.<br>
-        • 더블클릭하면 길이 끊어지며, 다음 이동은 점프(J)가 됩니다.<br>
-        • 탐험을 마치면 <b>정답 확인</b> 버튼을 눌러보세요.
+      kr: {
+        status: {
+          start: "START 지점에서 당신의 여정을 시작하세요. 그리드를 따라 길을 개척해보세요.",
+          reset: "경로가 초기화되었습니다. 다시 여정을 시작할 수 있어요.",
+          split: "선이 끊겼습니다. 다음 점부터 점프(J) 구간으로 인식됩니다.",
+          nearOnly: "인접한 점(상하좌우/대각선)으로만 이동할 수 있습니다.",
+          noAnswer: "이 TRIP은 아직 정답 경로가 설정되지 않았습니다.",
+          correct: "여정 완료! 🎉 당신의 경로가 정답과 일치합니다 (모양 일치).",
+          wrong: "이 경로는 정답과 일치하지 않아요. 다시 탐험해보세요.",
+          undo: "마지막 움직임을 취소했습니다."
+        },
+        instructions: `
+          <b>마우스 조작</b><br>
+          • 인접한 점들을 클릭해 그리드 위에 여정을 그립니다.<br>
+          • 상하좌우 및 대각선으로 이동할 수 있어요.<br>
+          • 더블클릭하면 길이 끊어지며, 다음 이동은 점프(J)가 됩니다.<br>
+          • 탐험을 마치면 <b>정답 확인</b> 버튼을 눌러보세요.
         `,
-                trip: n => `TRIP ${String(n).padStart(2, "0")}`
-            }
-        };
+        trip: n => `TRIP ${String(n).padStart(2, "0")}`
+      }
+    };
 
+    let currentLang = "en";
 
-        let currentLang = "en";
+    // ====== CONFIG ======
+    const GRID_SIZE = 11;
+    const BASE_CANVAS_SIZE = 700;
+    const BASE_MARGIN = 60;
+    const CLICK_RADIUS = 16;
 
-        // ====== CONFIG ======
+    // 각 레벨별 정답 코드
+    const ANSWER_CODES = {
+      1: ["J","J","L","F","L","F","RBD","F","LBD","RBD","F","RFD","F","F","F","RFD","F","RBD","LBD","F","RBD","F","L","F","R","F","R","F","L","F","L","F","R","F","LT","LT","J","J"],
+      2: ["J","J","F","RFD","F","LBD","F","LFD","RBD","RFD","LBD","LFD","RBD","LFD","F","R","R","R","F","LFD","RBD","LFD","LBD","RFD","RBD","LFD","F","LBD","F","RFD","L","F","F","LT","LT","J","LFD","R","R","R","LT","J","L","F","F","J","J"],
+      3: ["F","L","F","L","RT","RT","J","R","F","R","F","L","L","F","R","RT","RT","J","F","F","L","F","L","F","L","F","RT","RT","J","R","F","F","R","F","L","L","F","R","F","RT","RT","J","R","L","F","L"],
+      4: ["F","F","L","F","R","F","F","R","L","R","L","RFD","LFD","F","B","F","LFD","RFD","L","R","L","R","F","RT","RT","J","F","F","F","F","R","R","F","F","F","R","LT","LT","J","R","R","F","L","F"],
+      5: ["J","J","R","L","F","F","F","F","F","L","F","F","F","F","F","L","F","F","F","F","F","L","F","F","F","F","LT","LT","J","F","F","F","F","L","F","F","F","L","F","F","F","L","F","F","F","J","J","J"],
+      6: ["J","J","LFD","LFD","R","LFD","R","LFD","R","LFD","R","LFD","R","LFD","R","LFD","R","LFD","J","J"],
+      7: ["J","F","F","L","F","F","R","R","F","F","L","L","F","F","R","R","F","F","L","L","F","F","R","R","F","F","L","L","F","F","F","F","L","F","F","F","F","F","F","F","L","F","F","F","F","J","J"],
+      8: ["R","F","LFD","F","F","F","F","L","F","F","L","F","LFD","F","RFD","F","RFD","L","F","L","LT","LT","J","R","F","LFD","F","F","F","L","LBD","F","RT","RT","J","J","F","LFD","LBD","RT","RT","RT","J","J","J"],
+      9: ["J","J","F","F","F","F","F","F","R","F","F","F","RFD","F","RFD","F","RFD","F","RFD","F","F","F","RT","RT","RT","J","J","LFD","F","R","F","R","F","R","F","LT","LT","J","J","J","J"],
+      10:["J","J","J","F","F","R","F","RBD","F","R","F","RBD","F","F","F","F","F","F","LBD","F","F","LFD","F","F","F","LFD","F","F","LBD","F","F","RT","RT","RT","J","J","J"],
+      11:["LFD","F","LFD","RFD","F","R","F","L","R","F","F","RFD","R","F","F","F","F","F","F","F","F","F"],
+      12:["J","F","F","F","F","F","F","F","F","RBD","F","F","F","LFD","F","LFD","F","RBD","F","F","F","RBD","F","LFD","F","LFD","F","F","F","RT","J"]
+    };
 
-        // ====== GLOBAL STATE ======
-        // ====== 캔버스 / 그리드 기본 설정 ======
-        const GRID_SIZE = 11;
-        const BASE_CANVAS_SIZE = 700;  // 데스크탑에서 최대 크기
-        const BASE_MARGIN = 60;
-        const CLICK_RADIUS = 16;
+    // START points (grid index i,j)
+    const START_POINTS = {
+      1: { i: 8, j: 0 },
+      2: { i: 10, j: 8 },
+      3: { i: 6, j: 0 },
+      4: { i: 10, j: 4 },
+      5: { i: 0, j: 3 },
+      6: { i: 0, j: 5 },
+      7: { i: 8, j: 0 },
+      8: { i: 10, j: 2 },
+      9: { i: 6, j: 0 },
+      10:{ i: 0, j: 5 },
+      11:{ i: 7, j: 0 },
+      12:{ i: 0, j: 1 }
+    };
 
-        let canvasSize = BASE_CANVAS_SIZE;
-        let gridMargin = BASE_MARGIN;
-        let spacing;
+    // 0: N, 1: NE, 2: E, 3: SE, 4: S, 5: SW, 6: W, 7: NW
+    const ORI_DIRS = [
+      { di: -1, dj: 0 },
+      { di: -1, dj: 1 },
+      { di: 0,  dj: 1 },
+      { di: 1,  dj: 1 },
+      { di: 1,  dj: 0 },
+      { di: 1,  dj: -1 },
+      { di: 0,  dj: -1 },
+      { di: -1, dj: -1 }
+    ];
 
+    const DRAW_CODES = ["F","L","R","B","LFD","RFD","LBD","RBD"];
 
-        // 답안: 나중에 네가 채워 넣을 곳
-        // 예시 형태: "1": ["F","RFD","F","LT","J","F"]
-        const ANSWER_CODES = {
-            1: [
-                "J", "J", "L", "F", "L", "F", "RBD", "F", "LBD", "RBD", "F", "RFD", "F", "F", "F", "RFD", "F", "RBD", "LBD", "F", "RBD", "F", "L", "F", "R", "F", "R", "F", "L", "F", "L", "F", "R", "F", "LT", "LT", "J", "J"
-            ],
-            2: [
-                "J", "J", "F", "RFD", "F", "LBD", "F", "LFD", "RBD", "RFD", "LBD", "LFD", "RBD", "LFD", "F", "R", "R", "R", "F", "LFD", "RBD", "LFD", "LBD", "RFD", "RBD", "LFD", "F", "LBD", "F", "RFD", "L", "F", "F", "LT", "LT", "J", "LFD", "R", "R", "R", "LT", "J", "L", "F", "F", "J", "J"
-            ],
-            3: [
-                "F", "L", "F", "L", "RT", "RT", "J", "R", "F", "R", "F", "L", "L", "F", "R", "RT", "RT", "J", "F", "F", "L", "F", "L", "F", "L", "F", "RT", "RT", "J", "R", "F", "F", "R", "F", "L", "L", "F", "R", "F", "RT", "RT", "J", "R", "L", "F", "L"
-            ],
-            4: [
-                "F", "F", "L", "F", "R", "F", "F", "R", "L", "R", "L", "RFD", "LFD", "F", "B", "F", "LFD", "RFD", "L", "R", "L", "R", "F", "RT", "RT", "J", "F", "F", "F", "F", "R", "R", "F", "F", "F", "R", "LT", "LT", "J", "R", "R", "F", "L", "F"
-            ],
-            5: [
-                "J", "J", "R", "L", "F", "F", "F", "F", "F", "L", "F", "F", "F", "F", "F", "L", "F", "F", "F", "F", "F", "L", "F", "F", "F", "F", "LT", "LT", "J", "F", "F", "F", "F", "L", "F", "F", "F", "L", "F", "F", "F", "L", "F", "F", "F", "J", "J", "J"
-            ],
-            6: [
-                "J", "J", "LFD", "LFD", "R", "LFD", "R", "LFD", "R", "LFD", "R", "LFD", "R", "LFD", "R", "LFD", "R", "LFD", "J", "J"
-            ],
-            7: [
-                "J", "F", "F", "L", "F", "F", "R", "R", "F", "F", "L", "L", "F", "F", "R", "R", "F", "F", "L", "L", "F", "F", "R", "R", "F", "F", "L", "L", "F", "F", "F", "F", "L", "F", "F", "F", "F", "F", "F", "F", "L", "F", "F", "F", "F", "J", "J"
-            ],
-            8: [
-                "R", "F", "LFD", "F", "F", "F", "F", "L", "F", "F", "L", "F", "LFD", "F", "RFD", "F", "RFD", "L", "F", "L", "LT", "LT", "J", "R", "F", "LFD", "F", "F", "F", "L", "LBD", "F", "RT", "RT", "J", "J", "F", "LFD", "LBD", "RT", "RT", "RT", "J", "J", "J"
-            ],
-            9: [
-                "J", "J", "F", "F", "F", "F", "F", "F", "R", "F", "F", "F", "RFD", "F", "RFD", "F", "RFD", "F", "RFD", "F", "F", "F", "RT", "RT", "RT", "J", "J", "LFD", "F", "R", "F", "R", "F", "R", "F", "LT", "LT", "J", "J", "J", "J"
-            ],
-            10: [
-                "J", "J", "J", "F", "F", "R", "F", "RBD", "F", "R", "F", "RBD", "F", "F", "F", "F", "F", "F", "LBD", "F", "F", "LFD", "F", "F", "F", "LFD", "F", "F", "LBD", "F", "F", "RT", "RT", "RT", "J", "J", "J"
-            ],
-            11: [
-                "LFD", "F", "LFD", "RFD", "F", "R", "F", "L", "R", "F", "F", "RFD", "R", "F", "F", "F", "F", "F", "F", "F", "F", "F"
-            ],
-            12: [
-                "J", "F", "F", "F", "F", "F", "F", "F", "F", "RBD", "F", "F", "F", "LFD", "F", "LFD", "F", "RBD", "F", "F", "F", "RBD", "F", "LFD", "F", "LFD", "F", "F", "F", "RT", "J"
-            ],
-        };
+    // ====== STATE ======
+    let points = [];
+    let segments = [];
+    let activeSegment = null;
+    let currentPointIndex = null;
+    let startPoint = null;
 
+    let level = 1;
 
-        // 각 레벨별 START 위치 (격자 index: i, j)
-        // 기본값으로 "맨 위 중앙"으로 넣어둠. 나중에 변경 가능.
-        const START_POINTS = {
-            1: { i: 8, j: 0 },
-            2: { i: 10, j: 8 },
-            3: { i: 6, j: 0 },
-            4: { i: 10, j: 4 },
-            5: { i: 0, j: 3 },
-            6: { i: 0, j: 5 },
-            7: { i: 8, j: 0 },
-            8: { i: 10, j: 2 },
-            9: { i: 6, j: 0 },
-            10: { i: 0, j: 5 },
-            11: { i: 7, j: 0 },
-            12: { i: 0, j: 1 },
-        };
+    // UI
+    let statusDiv, resetBtn, checkBtn, levelTitle, undoBtn, langBtn;
 
-        // 0: N, 1: NE, 2: E, 3: SE, 4: S, 5: SW, 6: W, 7: NW
-        const ORI_DIRS = [
-            { di: -1, dj: 0 }, // N
-            { di: -1, dj: 1 }, // NE
-            { di: 0, dj: 1 }, // E
-            { di: 1, dj: 1 }, // SE
-            { di: 1, dj: 0 }, // S
-            { di: 1, dj: -1 }, // SW
-            { di: 0, dj: -1 }, // W
-            { di: -1, dj: -1 }, // NW
-        ];
+    // Canvas geometry
+    let canvasSize = BASE_CANVAS_SIZE;
+    let gridMargin = BASE_MARGIN;
+    let spacing = 0;
 
-        const DRAW_CODES = ["F", "L", "R", "B", "LFD", "RFD", "LBD", "RBD"];
-        const ALL_CODES = ["F", "L", "R", "B", "J", "LFD", "RFD", "LBD", "RBD", "LT", "RT"];
+    // Result overlay + confetti
+    let resultMode = null; // "correct" | "wrong" | null
+    let resultTimer = 0;
+    let confettiParticles = [];
+    let confettiBurstUntil = 0;
 
-        // ====== GLOBAL STATE ======
+    // ====== P5 ======
+    function setup() {
+      const canvas = createCanvas(BASE_CANVAS_SIZE, BASE_CANVAS_SIZE);
+      canvas.parent(document.querySelector("main"));
+      textFont("system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif");
 
+      initLevelFromQuery();
+      cacheDom();
+      updateCanvasSize();   // sets spacing + initGrid()
+      initGameState();
+      applyLanguage();
+      bindOverlayClose();
+      bindInkEffect();
+    }
 
-        // ====== GLOBAL STATE ======
-        let points = [];
-        let segments = [];
-        let activeSegment = null;
-        let currentPointIndex = null;
-        let startPoint = null;
+    function draw() {
+      background("#ef4136");
+      drawGrid();
+      drawBoardLabels();
+      drawSegments();
+      drawPoints();
+      drawResultOverlay();
+      updateAndDrawConfetti();
+    }
 
-        let level = 1;
+    function windowResized() {
+      updateCanvasSize();
+    }
 
-        let statusDiv, backBtn, resetBtn, checkBtn, levelTitle, undoBtn, langBtn;
-        let resultMode = null; // "correct" | "wrong" | null
-        let resultTimer = 0;
-        let confetti = [];
+    // ====== INIT / DOM ======
+    function initLevelFromQuery() {
+      const q = new URLSearchParams(window.location.search);
+      const lv = parseInt(q.get("level"), 10);
+      level = (!isNaN(lv) && lv >= 1 && lv <= 12) ? lv : 1;
+    }
 
+    function cacheDom() {
+      statusDiv = document.getElementById("status");
+      resetBtn = document.getElementById("resetBtn");
+      checkBtn = document.getElementById("checkBtn");
+      levelTitle = document.getElementById("levelTitle");
+      undoBtn = document.getElementById("undoBtn");
+      langBtn = document.getElementById("langBtn");
 
+      resetBtn.addEventListener("click", () => {
+        initGameState();
+        setStatus("reset");
+      });
 
+      checkBtn.addEventListener("click", onCheckAnswer);
 
-        // ====== P5 SETUP / DRAW ======
+      undoBtn.addEventListener("click", undoLastStep);
 
+      window.addEventListener("keydown", (e) => {
+        if ((e.key === "z" || e.key === "Z") && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          undoLastStep();
+        }
+        if (e.key === "Escape") hideResultCard();
+      });
 
-        function updateCanvasSize() {
-            const uiEl = document.getElementById("ui");
-            const uiW = uiEl ? uiEl.getBoundingClientRect().width : windowWidth * 0.95;
+      langBtn.addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "kr" : "en";
+        langBtn.textContent = currentLang.toUpperCase();
+        applyLanguage();
+      });
 
-            // 모바일은 기존처럼, 데스크탑은 높이 제한을 완화해서 UI 폭까지 키움
-            const isMobile = windowWidth <= 600;
-            const sizeByWidth = uiW;                 // 버튼/설명 폭과 캔버스 폭 맞춤
-            const sizeByHeight = windowHeight * (isMobile ? 0.55 : 0.78);
+      const prevTrip = document.getElementById("prevTrip");
+      const nextTrip = document.getElementById("nextTrip");
 
-            canvasSize = Math.min(BASE_CANVAS_SIZE, sizeByWidth, sizeByHeight);
+      const goLevel = (newLv) => {
+        newLv = Math.max(1, Math.min(12, newLv));
+        if (newLv === level) return;
 
-            gridMargin = (BASE_MARGIN / BASE_CANVAS_SIZE) * canvasSize;
+        level = newLv;
+        const url = new URL(window.location);
+        url.searchParams.set("level", level);
+        window.history.pushState({}, "", url);
 
-            resizeCanvas(canvasSize, canvasSize);
+        initGameState();
+        applyLanguage();
+      };
 
-            spacing = (canvasSize - 2 * gridMargin) / (GRID_SIZE - 1);
-            initGrid();
+      prevTrip.addEventListener("click", () => goLevel(level - 1));
+      nextTrip.addEventListener("click", () => goLevel(level + 1));
+    }
+
+    function applyLanguage() {
+      const L = LANG[currentLang];
+      levelTitle.textContent = L.trip(level);
+      document.getElementById("instructions").innerHTML = L.instructions;
+      setStatus("start");
+    }
+
+    function initGameState() {
+      segments = [];
+      activeSegment = null;
+      currentPointIndex = null;
+
+      resultMode = null;
+      resultTimer = 0;
+      confettiParticles.length = 0;
+      confettiBurstUntil = 0;
+
+      // START (참조용)
+      const sp = START_POINTS[level] || { i: 0, j: Math.floor(GRID_SIZE / 2) };
+      startPoint = points[ijToIndex(sp.i, sp.j)];
+    }
+
+    function setStatus(keyOrMsg) {
+      if (!statusDiv) return;
+      const L = LANG[currentLang];
+      statusDiv.textContent = (L?.status?.[keyOrMsg]) ? L.status[keyOrMsg] : keyOrMsg;
+    }
+
+    // ====== CANVAS SIZE / GRID ======
+    function updateCanvasSize() {
+      const uiEl = document.getElementById("ui");
+      const uiW = uiEl ? uiEl.getBoundingClientRect().width : windowWidth * 0.95;
+
+      const isMobile = windowWidth <= 600;
+      const sizeByWidth = uiW;
+      const sizeByHeight = windowHeight * (isMobile ? 0.55 : 0.78);
+
+      canvasSize = Math.min(BASE_CANVAS_SIZE, sizeByWidth, sizeByHeight);
+      gridMargin = (BASE_MARGIN / BASE_CANVAS_SIZE) * canvasSize;
+
+      resizeCanvas(canvasSize, canvasSize);
+
+      spacing = (canvasSize - 2 * gridMargin) / (GRID_SIZE - 1);
+      initGrid();
+    }
+
+    function initGrid() {
+      points = [];
+      let idx = 0;
+      for (let i = 0; i < GRID_SIZE; i++) {
+        for (let j = 0; j < GRID_SIZE; j++) {
+          const x = gridMargin + j * spacing;
+          const y = gridMargin + i * spacing;
+          points.push({ x, y, i, j, index: idx++ });
+        }
+      }
+    }
+
+    // ====== INDEX HELPERS ======
+    function indexToIJ(index) {
+      const i = Math.floor(index / GRID_SIZE);
+      const j = index % GRID_SIZE;
+      return { i, j };
+    }
+    function ijToIndex(i, j) {
+      return i * GRID_SIZE + j;
+    }
+
+    function isOnEdge(i, j) {
+      return (i === 0 || j === 0 || i === GRID_SIZE - 1 || j === GRID_SIZE - 1);
+    }
+
+    function initialOrientationForStart(i, j) {
+      if (i === 0) return 4;
+      if (i === GRID_SIZE - 1) return 0;
+      if (j === 0) return 2;
+      if (j === GRID_SIZE - 1) return 6;
+      return 4;
+    }
+
+    // ====== COMMANDS ======
+    function applyCommand(ori, code) {
+      let newOri = ori;
+      let stepOri = ori;
+      let type = "draw";
+
+      switch (code) {
+        case "F": stepOri = ori; break;
+        case "B": newOri = (ori + 4) % 8; stepOri = newOri; break;
+        case "L": newOri = (ori + 6) % 8; stepOri = newOri; break;
+        case "R": newOri = (ori + 2) % 8; stepOri = newOri; break;
+        case "J": stepOri = ori; type = "jump"; break;
+        case "LFD": newOri = (ori + 7) % 8; stepOri = newOri; break;
+        case "RFD": newOri = (ori + 1) % 8; stepOri = newOri; break;
+        case "LBD": newOri = (ori + 5) % 8; stepOri = newOri; break;
+        case "RBD": newOri = (ori + 3) % 8; stepOri = newOri; break;
+        case "LT": return { newOri: (ori + 7) % 8, di: 0, dj: 0, type: "rotate" };
+        case "RT": return { newOri: (ori + 1) % 8, di: 0, dj: 0, type: "rotate" };
+        default:  return null;
+      }
+
+      const d = ORI_DIRS[stepOri];
+      return { newOri, di: d.di, dj: d.dj, type };
+    }
+
+    function buildStepsFromSegments() {
+      if (!segments || segments.length === 0) return [];
+      const chronological = [];
+
+      for (let s = 0; s < segments.length; s++) {
+        const seg = segments[s];
+        if (!seg.points || seg.points.length === 0) continue;
+
+        for (let k = 0; k < seg.points.length - 1; k++) {
+          chronological.push({ from: seg.points[k], to: seg.points[k + 1], type: "draw" });
         }
 
+        if (s < segments.length - 1) {
+          const nextSeg = segments[s + 1];
+          if (seg.points.length > 0 && nextSeg.points.length > 0) {
+            const from = seg.points[seg.points.length - 1];
+            const to = nextSeg.points[0];
+            if (from !== to) chronological.push({ from, to, type: "jump" });
+          }
+        }
+      }
 
-        function setup() {
-            // 일단 임시 크기로 만든 뒤, updateCanvasSize에서 실제 크기 맞추기
-            const canvas = createCanvas(BASE_CANVAS_SIZE, BASE_CANVAS_SIZE);
-            canvas.parent(document.querySelector("main"));
+      return chronological;
+    }
 
-            textFont("system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif");
+    function decodeCommandsToSteps(commands, startIndex, startOri) {
+      let steps = [];
+      let ori = startOri;
+      let currentIndex = startIndex;
 
-            updateCanvasSize();        // 화면 크기에 맞게 캔버스/그리드 조정
-            initLevelFromQuery();
-            cacheDom();
-            initGameState();
+      for (let k = 0; k < commands.length; k++) {
+        const res = applyCommand(ori, commands[k]);
+        if (!res) {
+          return { ok: false, error: `정답 코드의 ${k + 1}번째 명령(${commands[k]})를 해석할 수 없습니다.`, steps: [] };
         }
 
-
-
-        function draw() {
-            background('#ef4136');
-            drawGrid();
-            drawBoardLabels(); 
-            // ★ Filled Shape (if correct)
-            drawFilledShape();
-            drawSegments();
-            drawPoints();
-            //drawStartMarker();
-            drawResultOverlay();
-            drawConfetti();
+        if (res.type === "rotate") {
+          ori = res.newOri;
+          continue;
         }
 
-        // ====== INIT / DOM ======
-        function initLevelFromQuery() {
-            const q = new URLSearchParams(window.location.search);
-            const lv = parseInt(q.get("level"), 10);
-            level = (!isNaN(lv) && lv >= 1 && lv <= 12) ? lv : 1;
+        const { i, j } = indexToIJ(currentIndex);
+        const ni = i + res.di;
+        const nj = j + res.dj;
+
+        if (ni < 0 || ni >= GRID_SIZE || nj < 0 || nj >= GRID_SIZE) {
+          return { ok: false, error: `정답 코드가 격자 밖으로 나갑니다. (step ${k + 1})`, steps: [] };
         }
 
-        function cacheDom() {
-            statusDiv = document.getElementById("status");
-            resetBtn = document.getElementById("resetBtn");
-            checkBtn = document.getElementById("checkBtn");
-            levelTitle = document.getElementById("levelTitle");
-            undoBtn = document.getElementById("undoBtn");  // ★ 추가
+        const nextIndex = ijToIndex(ni, nj);
+        steps.push({ from: currentIndex, to: nextIndex, type: res.type });
+        currentIndex = nextIndex;
+        ori = res.newOri;
+      }
 
-            const L = LANG[currentLang];
-            levelTitle.textContent = L.trip(level);
+      return { ok: true, error: "", steps };
+    }
 
-            resetBtn.addEventListener("click", () => {
-                initGameState();
-                setStatus("reset");
-            });
+    // ====== SHAPE MATCH HELPERS ======
+    function getEdgesFromSteps(steps) {
+      const edges = new Set();
+      for (const step of steps) {
+        if (step.type !== "draw") continue;
+        const a = Math.min(step.from, step.to);
+        const b = Math.max(step.from, step.to);
+        edges.add(`${a}-${b}`);
+      }
+      return edges;
+    }
 
-            checkBtn.addEventListener("click", onCheckAnswer);
+    function areEdgeSetsEqual(setA, setB) {
+      if (setA.size !== setB.size) return false;
+      for (const edge of setA) if (!setB.has(edge)) return false;
+      return true;
+    }
 
-            // ★ Undo 버튼 클릭
-            undoBtn.addEventListener("click", () => {
-                undoLastStep();
-            });
+    // ====== ANSWER CHECK ======
+    function onCheckAnswer() {
+      const ans = ANSWER_CODES[level];
+      if (!ans || !Array.isArray(ans) || ans.length === 0) {
+        setStatus("noAnswer");
+        return;
+      }
 
-            // ★ Cmd+Z / Ctrl+Z 단축키
-            window.addEventListener("keydown", (e) => {
-                if ((e.key === "z" || e.key === "Z") && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault();
-                    undoLastStep();
-                }
-            });
+      const playerSteps = buildStepsFromSegments();
+      if (playerSteps.length === 0) {
+        setStatus("경로가 없습니다. 먼저 그림을 그려주세요.");
+        resultMode = null;
+        resultTimer = 0;
+        confettiParticles.length = 0;
+        return;
+      }
 
-            langBtn = document.getElementById("langBtn");
-            langBtn.addEventListener("click", () => {
-                currentLang = currentLang === "en" ? "kr" : "en";
-                langBtn.textContent = currentLang.toUpperCase();
-                applyLanguage();
-            });
+      const sp = START_POINTS[level] || { i: 0, j: Math.floor(GRID_SIZE / 2) };
+      const startIndex = ijToIndex(sp.i, sp.j);
+      const startOri = initialOrientationForStart(sp.i, sp.j);
 
-            const prevTrip = document.getElementById("prevTrip");
-            const nextTrip = document.getElementById("nextTrip");
+      const decoded = decodeCommandsToSteps(ans, startIndex, startOri);
+      if (!decoded.ok) {
+        setStatus(decoded.error);
+        resultMode = null;
+        resultTimer = 0;
+        confettiParticles.length = 0;
+        return;
+      }
 
-            function goLevel(newLv){
-            newLv = Math.max(1, Math.min(12, newLv));
-            if (newLv === level) return;
-            level = newLv;
+      const ok = areEdgeSetsEqual(getEdgesFromSteps(playerSteps), getEdgesFromSteps(decoded.steps));
 
-            const url = new URL(window.location);
-            url.searchParams.set("level", level);
-            window.history.pushState({}, "", url);
+      if (ok) {
+        resultMode = "correct";
+        resultTimer = 180;
+        spawnFancyConfetti();
+        showResultCard(`img/trip${String(level).padStart(2, "0")}.png`);
+        setStatus("correct");
+      } else {
+        resultMode = "wrong";
+        resultTimer = 180;
+        confettiParticles.length = 0;
+        setStatus("wrong");
+      }
+    }
 
-            initGameState();
-            }
+    // ====== MOUSE INTERACTION ======
+    function mousePressed() {
+      if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) return;
+      const idx = findClickedPoint(mouseX, mouseY);
+      if (idx === -1) return;
+      handleClickOnPoint(idx);
+    }
 
-            prevTrip.addEventListener("click", () => goLevel(level - 1));
-            nextTrip.addEventListener("click", () => goLevel(level + 1));
+    function mouseDragged() {
+      if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) return;
 
+      const idx = findClickedPoint(mouseX, mouseY);
+      if (idx === -1) return;
+      if (currentPointIndex === idx) return;
+
+      // 드래그로 시작 가능
+      if (activeSegment == null) {
+        activeSegment = { points: [idx] };
+        segments.push(activeSegment);
+        currentPointIndex = idx;
+        return;
+      }
+
+      // 인접한 경우만 draw (드래그는 점프 금지)
+      const p = points[idx];
+      const lastP = points[currentPointIndex];
+      const di = p.i - lastP.i;
+      const dj = p.j - lastP.j;
+
+      const isAdjacent = (Math.abs(di) <= 1 && Math.abs(dj) <= 1 && !(di === 0 && dj === 0));
+      if (isAdjacent) {
+        activeSegment.points.push(idx);
+        currentPointIndex = idx;
+      }
+    }
+
+    function doubleClicked() {
+      if (currentPointIndex != null) {
+        activeSegment = null;
+        currentPointIndex = null;
+        setStatus("split");
+      }
+      return false;
+    }
+
+    function findClickedPoint(mx, my) {
+      let closestIndex = -1;
+      let closestDistSq = CLICK_RADIUS * CLICK_RADIUS;
+
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i];
+        const dx = mx - p.x;
+        const dy = my - p.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 <= closestDistSq) {
+          closestIndex = i;
+          closestDistSq = d2;
+        }
+      }
+      return closestIndex;
+    }
+
+    function handleClickOnPoint(idx) {
+      if (activeSegment == null) {
+        activeSegment = { points: [idx] };
+        segments.push(activeSegment);
+        currentPointIndex = idx;
+        return;
+      }
+
+      const p = points[idx];
+      const lastP = points[currentPointIndex];
+      const di = p.i - lastP.i;
+      const dj = p.j - lastP.j;
+      const isAdjacent = (Math.abs(di) <= 1 && Math.abs(dj) <= 1 && !(di === 0 && dj === 0));
+
+      if (isAdjacent) {
+        activeSegment.points.push(idx);
+        currentPointIndex = idx;
+      } else {
+        // 멀리 찍으면 점프(새 세그먼트)
+        activeSegment = { points: [idx] };
+        segments.push(activeSegment);
+        currentPointIndex = idx;
+        setStatus("split");
+      }
+    }
+
+    // ====== DRAW ======
+    function drawGrid() {
+      push();
+
+      noStroke();
+      fill(255, 250, 245);
+      rect(gridMargin, gridMargin, width - 2 * gridMargin, height - 2 * gridMargin);
+
+      stroke(255, 200, 195);
+      strokeWeight(1);
+      drawingContext.setLineDash([4, 4]);
+
+      for (let i = 1; i < GRID_SIZE - 1; i++) {
+        const y = gridMargin + i * spacing;
+        line(gridMargin, y, width - gridMargin, y);
+      }
+
+      for (let j = 1; j < GRID_SIZE - 1; j++) {
+        const x = gridMargin + j * spacing;
+        line(x, gridMargin, x, height - gridMargin);
+      }
+
+      drawingContext.setLineDash([]);
+      pop();
+    }
+
+    function drawPoints() {
+      push();
+      noStroke();
+      fill(239, 65, 54, 150);
+      const r = 2;
+
+      for (const p of points) {
+        if (startPoint && p.index === startPoint.index) continue;
+        circle(p.x, p.y, r * 2);
+      }
+      pop();
+    }
+
+    function drawSegments() {
+      if (!segments || segments.length === 0) return;
+
+      push();
+      stroke(239, 65, 54);
+      strokeWeight(5);
+      noFill();
+
+      for (const seg of segments) {
+        if (!seg.points || seg.points.length < 2) continue;
+        for (let k = 0; k < seg.points.length - 1; k++) {
+          const a = points[seg.points[k]];
+          const b = points[seg.points[k + 1]];
+          line(a.x, a.y, b.x, b.y);
+        }
+      }
+
+      pop();
+    }
+
+    function drawBoardLabels() {
+      push();
+      fill("#ffffff");
+      noStroke();
+      textAlign(CENTER, CENTER);
+
+      const fs = Math.max(9, Math.min(14, canvasSize * 0.02));
+      textSize(fs);
+
+      const count = GRID_SIZE - 2; // 9
+      const out = Math.max(14, gridMargin * 0.5);
+
+      for (let k = 0; k < count; k++) {
+        const n = String(k + 1).padStart(2, "0");
+        const x = gridMargin + (k + 1) * spacing;
+        const y = gridMargin + (k + 1) * spacing;
+
+        text(`B-${n}`, x, gridMargin - out);
+        text(`D-${n}`, x, height - gridMargin + out);
+        text(`A-${n}`, gridMargin - out, y);
+        text(`C-${n}`, width - gridMargin + out, y);
+      }
+
+      pop();
+    }
+
+    // ====== RESULT OVERLAY (O / X) ======
+    function drawResultOverlay() {
+      if (!resultMode || resultTimer <= 0) return;
+      resultTimer--;
+
+      const cx = width / 2;
+      const cy = height / 2;
+      const gridW = width - 2 * gridMargin;
+      const baseR = gridW * 0.45;
+
+      if (resultMode === "correct") {
+        noFill();
+        stroke(46, 204, 113);
+        strokeWeight(14);
+        circle(cx, cy, baseR);
+      } else if (resultMode === "wrong") {
+        stroke(220, 38, 38);
+        strokeWeight(14);
+        const r = baseR * 0.7;
+        line(cx - r, cy - r, cx + r, cy + r);
+        line(cx - r, cy + r, cx + r, cy - r);
+      }
+    }
+
+    // ====== CONFETTI ======
+    function spawnFancyConfetti() {
+      const now = millis();
+      confettiBurstUntil = now + 1400;
+      for (let i = 0; i < 140; i++) confettiParticles.push(new ConfettiParticle());
+    }
+
+    function updateAndDrawConfetti() {
+      push();
+      blendMode(ADD);
+
+      if (millis() < confettiBurstUntil) {
+        for (let i = 0; i < 6; i++) confettiParticles.push(new ConfettiParticle());
+      }
+
+      for (let i = confettiParticles.length - 1; i >= 0; i--) {
+        const p = confettiParticles[i];
+        p.update();
+        p.draw();
+        if (p.dead) confettiParticles.splice(i, 1);
+      }
+
+      pop();
+      blendMode(BLEND);
+    }
+
+    class ConfettiParticle {
+      constructor() {
+        this.x = random(width * 0.2, width * 0.8);
+        this.y = random(-40, -10);
+        this.vx = random(-1.8, 1.8);
+        this.vy = random(2.2, 5.2);
+        this.rot = random(TWO_PI);
+        this.rotSpd = random(-0.18, 0.18);
+        this.size = random(4, 14);
+        this.life = 255;
+        this.type = floor(random(3));
+        this.base = color(239, 65, 54, 220);
+        this.hi = color(255, 255, 255, 220);
+        this.dead = false;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx += sin(frameCount * 0.05 + this.rot) * 0.02;
+        this.rot += this.rotSpd;
+        this.life -= 4;
+        if (this.life <= 0 || this.y > height + 40) this.dead = true;
+      }
+
+      draw() {
+        push();
+        translate(this.x, this.y);
+        rotate(this.rot);
+
+        noFill();
+        stroke(red(this.hi), green(this.hi), blue(this.hi), this.life);
+        strokeWeight(1);
+
+        if (this.type === 0) {
+          const w = this.size * random(0.7, 1.2);
+          const h = this.size * random(0.4, 0.9);
+          rectMode(CENTER);
+          rect(0, 0, w + 1, h + 1, 2);
+
+          noStroke();
+          fill(red(this.base), green(this.base), blue(this.base), this.life);
+          rect(0, 0, w, h, 2);
+
+        } else if (this.type === 1) {
+          ellipse(0, 0, this.size + 1, this.size + 1);
+
+          noStroke();
+          fill(255, 255, 255, this.life * 0.65);
+          ellipse(-this.size * 0.15, -this.size * 0.15, this.size * 0.45);
+
+          fill(red(this.base), green(this.base), blue(this.base), this.life);
+          ellipse(0, 0, this.size);
+
+        } else {
+          stroke(255, 255, 255, this.life);
+          strokeWeight(1.2);
+          line(-this.size * 0.6, 0, this.size * 0.6, 0);
+          line(0, -this.size * 0.6, 0, this.size * 0.6);
+
+          noStroke();
+          fill(255, 255, 255, this.life * 0.75);
+          beginShape();
+          vertex(0, -this.size * 0.6);
+          vertex(this.size * 0.35, 0);
+          vertex(0, this.size * 0.6);
+          vertex(-this.size * 0.35, 0);
+          endShape(CLOSE);
         }
 
-        function applyLanguage() {
-            const L = LANG[currentLang];
+        pop();
+      }
+    }
 
-            // TRIP 제목
-            levelTitle.textContent = L.trip(level);
+    // ====== UNDO ======
+    function undoLastStep() {
+      if (!segments || segments.length === 0) return;
 
-            // 상태 문구는 공용 함수로 처리
-            setStatus("start");
+      let s = segments.length - 1;
+      while (s >= 0 && (!segments[s].points || segments[s].points.length === 0)) s--;
+      if (s < 0) return;
 
-            // 안내 문구
-            document.getElementById("instructions").innerHTML = L.instructions;
+      const seg = segments[s];
+
+      if (seg.points.length > 1) {
+        seg.points.pop();
+        currentPointIndex = seg.points[seg.points.length - 1];
+        activeSegment = seg;
+      } else {
+        segments.splice(s, 1);
+        if (segments.length === 0) {
+          activeSegment = null;
+          currentPointIndex = null;
+        } else {
+          const lastSeg = segments[segments.length - 1];
+          activeSegment = lastSeg;
+          currentPointIndex = lastSeg.points[lastSeg.points.length - 1];
         }
-
-
-
-        function initGameState() {
-            segments = [];
-            activeSegment = null;
-            currentPointIndex = null;
-            resultMode = null;
-            resultTimer = 0;
-            confetti = [];
-
-            // START 설정 (참조용)
-            const sp = START_POINTS[level] || { i: 0, j: Math.floor(GRID_SIZE / 2) };
-            const idx = ijToIndex(sp.i, sp.j);
-            startPoint = points[idx];
-
-            // ★ REMOVED: Automatically starting a segment.
-            // activeSegment = { points: [idx] };
-            // segments.push(activeSegment);
-            // currentPointIndex = idx;
-
-            setStatus("start");
-
-            applyLanguage();
-
-
-        }
-
-        function setStatus(keyOrMsg) {
-            if (!statusDiv) return;
-            const L = LANG[currentLang];
-
-            // LANG.status 안에 같은 키가 있으면 그걸 사용
-            if (L && L.status && L.status[keyOrMsg]) {
-                statusDiv.textContent = L.status[keyOrMsg];
-            } else {
-                // 없으면 그냥 원래 문자열 그대로 (디버그용)
-                statusDiv.textContent = keyOrMsg;
-            }
-        }
-
-
-        function indexToIJ(index) {
-            const i = Math.floor(index / GRID_SIZE);
-            const j = index % GRID_SIZE;
-            return { i, j };
-        }
-
-        function ijToIndex(i, j) {
-            return i * GRID_SIZE + j;
-        }
-
-        function isOnEdge(i, j) {
-            return (
-                i === 0 ||
-                j === 0 ||
-                i === GRID_SIZE - 1 ||
-                j === GRID_SIZE - 1
-            );
-        }
-
-        function initialOrientationForStart(i, j) {
-            if (i === 0) return 4; // top → S
-            if (i === GRID_SIZE - 1) return 0; // bottom → N
-            if (j === 0) return 2; // left → E
-            if (j === GRID_SIZE - 1) return 6; // right → W
-            return 4;
-        }
-
-        // ====== COMMAND APPLY / ENCODE ======
-        function applyCommand(ori, code) {
-            let newOri = ori;
-            let stepOri = ori;
-            let type = "draw";
-
-            switch (code) {
-                case "F":
-                    stepOri = ori;
-                    break;
-                case "B":
-                    newOri = (ori + 4) % 8;
-                    stepOri = newOri;
-                    break;
-                case "L":
-                    newOri = (ori + 6) % 8;
-                    stepOri = newOri;
-                    break;
-                case "R":
-                    newOri = (ori + 2) % 8;
-                    stepOri = newOri;
-                    break;
-                case "J":
-                    stepOri = ori;
-                    type = "jump";
-                    break;
-                case "LFD":
-                    newOri = (ori + 7) % 8;
-                    stepOri = newOri;
-                    break;
-                case "RFD":
-                    newOri = (ori + 1) % 8;
-                    stepOri = newOri;
-                    break;
-                case "LBD":
-                    newOri = (ori + 5) % 8;
-                    stepOri = newOri;
-                    break;
-                case "RBD":
-                    newOri = (ori + 3) % 8;
-                    stepOri = newOri;
-                    break;
-                case "LT":
-                    newOri = (ori + 7) % 8;
-                    stepOri = ori; // 회전만, 이동 없음
-                    return { newOri, di: 0, dj: 0, type: "rotate" };
-                case "RT":
-                    newOri = (ori + 1) % 8;
-                    stepOri = ori;
-                    return { newOri, di: 0, dj: 0, type: "rotate" };
-            }
-
-            const d = ORI_DIRS[stepOri];
-            return { newOri, di: d.di, dj: d.dj, type };
-        }
-
-        function buildStepsFromSegments() {
-            if (!segments || segments.length === 0) return [];
-            const chronological = [];
-
-            for (let s = 0; s < segments.length; s++) {
-                const seg = segments[s];
-                if (!seg.points || seg.points.length === 0) continue;
-
-                for (let k = 0; k < seg.points.length - 1; k++) {
-                    const from = seg.points[k];
-                    const to = seg.points[k + 1];
-                    chronological.push({ from, to, type: "draw" });
-                }
-
-                if (s < segments.length - 1) {
-                    const nextSeg = segments[s + 1];
-                    if (seg.points.length > 0 && nextSeg.points.length > 0) {
-                        const from = seg.points[seg.points.length - 1];
-                        const to = nextSeg.points[0];
-                        if (from !== to) {
-                            chronological.push({ from, to, type: "jump" });
-                        }
-                    }
-                }
-            }
-
-            return chronological;
-        }
-
-        function encodeStep(ori, fromIndex, toIndex, type) {
-            const from = indexToIJ(fromIndex);
-            const to = indexToIJ(toIndex);
-            const di = to.i - from.i;
-            const dj = to.j - from.j;
-
-            // Jump: 현재 바라보는 방향으로 1칸일 때만 J로 표현
-            if (type === "jump") {
-                const d = ORI_DIRS[ori];
-                if (d.di === di && d.dj === dj) {
-                    return { code: "J", newOri: ori };
-                } else {
-                    return null;
-                }
-            }
-
-            // Draw: F/L/R/B/LFD/RFD/LBD/RBD 중 하나
-            for (const c of DRAW_CODES) {
-                const res = applyCommand(ori, c);
-                if (res.type !== "draw") continue;
-                if (res.di === di && res.dj === dj) {
-                    return { code: c, newOri: res.newOri };
-                }
-            }
-            return null;
-        }
-
-        function encodeCurrentPath() {
-            if (!startPoint) return { ok: false, error: "START가 설정되지 않았습니다.", commands: [] };
-
-            const steps = buildStepsFromSegments();
-            if (steps.length === 0) {
-                return { ok: false, error: "경로가 없습니다.", commands: [] };
-            }
-
-            const { i: si, j: sj } = indexToIJ(steps[0].from);
-            if (!isOnEdge(si, sj)) {
-                return { ok: false, error: "START는 격자 바깥 가장자리여야 합니다.", commands: [] };
-            }
-
-            let ori = initialOrientationForStart(si, sj);
-            const cmds = [];
-
-            for (let k = 0; k < steps.length; k++) {
-                const st = steps[k];
-                const encoded = encodeStep(ori, st.from, st.to, st.type);
-                if (!encoded) {
-                    return {
-                        ok: false,
-                        error: `해당 움직임을 암호로 표현할 수 없습니다. (step ${k + 1})`,
-                        commands: []
-                    };
-                }
-                cmds.push(encoded.code);
-                ori = encoded.newOri;
-            }
-
-            return { ok: true, error: "", commands: cmds };
-        }
-
-        // 정답 암호 리스트(ANSWER_CODES[level])를
-        // 시작 인덱스/방향 기준으로 "from/to/type" step 배열로 디코드
-        function decodeCommandsToSteps(commands, startIndex, startOri) {
-            let steps = [];
-            let ori = startOri;
-            let currentIndex = startIndex;
-
-            for (let k = 0; k < commands.length; k++) {
-                const cmd = commands[k];
-                const res = applyCommand(ori, cmd);
-
-                if (!res) {
-                    return {
-                        ok: false,
-                        error: `정답 코드의 ${k + 1}번째 명령(${cmd})를 해석할 수 없습니다.`,
-                        steps: []
-                    };
-                }
-
-                // LT / RT 같은 회전만 있는 경우
-                if (res.type === "rotate") {
-                    ori = res.newOri;
-                    continue;
-                }
-
-                const { i, j } = indexToIJ(currentIndex);
-                const ni = i + res.di;
-                const nj = j + res.dj;
-
-                if (ni < 0 || ni >= GRID_SIZE || nj < 0 || nj >= GRID_SIZE) {
-                    return {
-                        ok: false,
-                        error: `정답 코드가 격자 밖으로 나갑니다. (step ${k + 1})`,
-                        steps: []
-                    };
-                }
-
-                const nextIndex = ijToIndex(ni, nj);
-                steps.push({ from: currentIndex, to: nextIndex, type: res.type });
-                currentIndex = nextIndex;
-                ori = res.newOri;
-            }
-
-            return { ok: true, error: "", steps };
-        }
-
-        // ====== SHAPE CHECKING HELPERS ======
-        function getEdgesFromSteps(steps) {
-            const edges = new Set();
-            for (const step of steps) {
-                if (step.type === 'draw') {
-                    // Canonical edge representation: lesser index first
-                    const a = Math.min(step.from, step.to);
-                    const b = Math.max(step.from, step.to);
-                    edges.add(`${a}-${b}`);
-                }
-            }
-            return edges;
-        }
-
-        function areEdgeSetsEqual(setA, setB) {
-            if (setA.size !== setB.size) return false;
-            for (const edge of setA) {
-                if (!setB.has(edge)) return false;
-            }
-            return true;
-        }
-
-        // ====== ANSWER CHECK ======
-        function onCheckAnswer() {
-            const ans = ANSWER_CODES[level];
-            if (!ans || !Array.isArray(ans) || ans.length === 0) {
-                setStatus("noAnswer");
-                return;
-            }
-
-            // 1) 플레이어가 그린 경로를 steps로 가져오기
-            const playerSteps = buildStepsFromSegments();
-            if (playerSteps.length === 0) {
-                setStatus("경로가 없습니다. 먼저 그림을 그려주세요.");
-                resultMode = null;
-                resultTimer = 0;
-                confetti = [];
-                return;
-            }
-
-            // 2) 정답 코드를 같은 형식의 steps로 디코드
-            const sp = START_POINTS[level] || { i: 0, j: Math.floor(GRID_SIZE / 2) };
-            const startIndex = ijToIndex(sp.i, sp.j);
-            const startOri = initialOrientationForStart(sp.i, sp.j);
-
-            const decoded = decodeCommandsToSteps(ans, startIndex, startOri);
-            if (!decoded.ok) {
-                setStatus(decoded.error);
-                resultMode = null;
-                resultTimer = 0;
-                confetti = [];
-                return;
-            }
-
-            // 3) Compare Edges (SHAPE MATCHING)
-            const playerEdges = getEdgesFromSteps(playerSteps);
-            const answerEdges = getEdgesFromSteps(decoded.steps);
-
-            const ok = areEdgeSetsEqual(playerEdges, answerEdges);
-
-            if (ok) {
-                resultMode = "correct";
-                resultTimer = 180;
-                spawnConfetti();
-                setStatus("correct");
-            } else {
-                resultMode = "wrong";
-                resultTimer = 180;
-                confetti = [];
-                setStatus("wrong");
-            }
-
-        }
-
-        function compareCommands(ans, player) {
-            if (ans.length !== player.length) return false;
-            for (let i = 0; i < ans.length; i++) {
-                if (ans[i] !== player[i]) return false;
-            }
-            return true;
-        }
-
-        // ====== MOUSE INTERACTION ======
-        function mousePressed() {
-            if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) return;
-
-            const idx = findClickedPoint(mouseX, mouseY);
-            if (idx === -1) return;
-
-            handleClickOnPoint(idx);
-        }
-
-        function mouseDragged() {
-            if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) return;
-
-            const idx = findClickedPoint(mouseX, mouseY);
-            if (idx === -1) return;
-
-            // 이미 현재 위치에 있는 점이면 무시 (지나치게 빠른 재실행 방지)
-            if (currentPointIndex === idx) return;
-
-            // 아직 그리는 중이 아니라면 -> 드래그로 시작 가능
-            if (activeSegment == null) {
-                activeSegment = { points: [idx] };
-                segments.push(activeSegment);
-                currentPointIndex = idx;
-                return;
-            }
-
-            // 그리는 중이라면 -> 인접한 경우에만 연결 (점프 X)
-            const p = points[idx];
-            const lastP = points[currentPointIndex];
-            const di = p.i - lastP.i;
-            const dj = p.j - lastP.j;
-
-            const isAdjacent = (Math.abs(di) <= 1 && Math.abs(dj) <= 1 && !(di === 0 && dj === 0));
-
-            if (isAdjacent) {
-                activeSegment.points.push(idx);
-                currentPointIndex = idx;
-            }
-            // 인접하지 않으면? 드래그 중인 손떨림일 수 있으므로 무시 (점프하지 않음)
-        }
-
-        function doubleClicked() {
-            if (currentPointIndex != null) {
-                activeSegment = null;
-                currentPointIndex = null;
-                setStatus("split");
-            }
-            return false;
-        }
-
-
-
-        function findClickedPoint(mx, my) {
-            let closestIndex = -1;
-            let closestDistSq = CLICK_RADIUS * CLICK_RADIUS;
-            for (let i = 0; i < points.length; i++) {
-                const p = points[i];
-                const dx = mx - p.x;
-                const dy = my - p.y;
-                const d2 = dx * dx + dy * dy;
-                if (d2 <= closestDistSq) {
-                    closestIndex = i;
-                    closestDistSq = d2;
-                }
-            }
-            return closestIndex;
-        }
-        function handleClickOnPoint(idx) {
-            const p = points[idx];
-
-            // 1) 아무것도 안 그리고 있을 때 (첫 클릭)
-            if (activeSegment == null) {
-                activeSegment = { points: [idx] };
-                segments.push(activeSegment);
-                currentPointIndex = idx;
-                return;
-            }
-
-            // 2) 이미 그리는 중일 때
-            const lastP = points[currentPointIndex];
-            const di = p.i - lastP.i;
-            const dj = p.j - lastP.j;
-
-            // 거리 체크
-            const isAdjacent = (Math.abs(di) <= 1 && Math.abs(dj) <= 1 && !(di === 0 && dj === 0));
-
-            if (isAdjacent) {
-                // 인접하면 선 잇기
-                activeSegment.points.push(idx);
-                currentPointIndex = idx;
-            } else {
-                // 멀리 찍으면 자동 점프 (새 세그먼트 시작)
-                activeSegment = { points: [idx] };
-                segments.push(activeSegment);
-                currentPointIndex = idx;
-                setStatus("split"); // (Optional feedback)
-            }
-        }
-
-
-        // ====== DRAW HELPERS ======
-        function drawGrid() {
-            push();
-
-            // ✅ 그리드 배경 (원하면 여기 색 바꾸면 됨! 예: 아주 연한 아이보리)
-            noStroke();
-            fill(255, 250, 245); // 원하는 색으로 변경 가능
-            rect(gridMargin, gridMargin, width - 2 * gridMargin, height - 2 * gridMargin);
-
-
-            // ✅ 점선 설정
-            stroke(255, 200, 195);      // 연한 빨강 계열
-            strokeWeight(1);
-            drawingContext.setLineDash([4, 4]); // [선 길이, 공백 길이]
-
-            // 가로선 (맨 위/아래 제외)
-            for (let i = 1; i < GRID_SIZE - 1; i++) {
-            const y = gridMargin + i * spacing;
-            line(gridMargin, y, width - gridMargin, y);
-            }
-
-            // 세로선 (맨 왼쪽/오른쪽 제외)
-            for (let j = 1; j < GRID_SIZE - 1; j++) {
-            const x = gridMargin + j * spacing;
-            line(x, gridMargin, x, height - gridMargin);
-            }
-
-            // ✅ 다른 그리기에는 점선 안 먹도록 리셋
-            drawingContext.setLineDash([]);
-
-            pop();
-        }
-
-
-        function drawPoints() {
-            push();
-            noStroke();
-            fill(239, 65, 54, 150);   // #EF4136 기반, 약간 반투명 (alpha 150)
-            const r = 2;
-
-            for (const p of points) {
-                if (startPoint && p.index === startPoint.index) continue;
-                circle(p.x, p.y, r * 2);
-            }
-            pop();
-        }
-
-
-        function drawSegments() {
-            if (!segments || segments.length === 0) return;
-
-            push();                       // ← 다른 그리기 설정 보호
-            stroke(239, 65, 54);          // #EF4136 빨간색
-            strokeWeight(5);
-            noFill();
-
-            for (const seg of segments) {
-                if (!seg.points || seg.points.length < 2) continue;
-                for (let k = 0; k < seg.points.length - 1; k++) {
-                    const a = points[seg.points[k]];
-                    const b = points[seg.points[k + 1]];
-                    line(a.x, a.y, b.x, b.y);
-                }
-            }
-
-            pop();
-        }
-
-        function drawBoardLabels(){
-            push();
-
-            // ✅ 스타일 (SVG처럼 얇고 미세한 느낌)
-            fill('#ffffff');       // #EF4136
-            noStroke();
-            textAlign(CENTER, CENTER);
-
-            // 캔버스 크기에 따라 글자 크기 자동 (너무 크지 않게)
-            const fs = Math.max(9, Math.min(14, canvasSize * 0.02));
-            textSize(fs);
-            textStyle(NORMAL);
-
-            // ✅ 라벨 개수: 내부 셀 9개 느낌 (가장자리 한 칸 제외)
-            const count = GRID_SIZE - 2; // 11 -> 9
-
-            // 라벨이 그리드 바깥으로 살짝 나가게 위치 오프셋
-            const out = Math.max(14, gridMargin * 0.5);
-
-            // 내부 9칸의 중앙 좌표 (k=0..8)
-            // gridMargin + spacing*(k+1) 위치에 찍혀 있는 점 라인이므로,
-            // 라벨은 그 점 기준으로 배치하면 SVG 느낌이 잘 나와.
-            for(let k=0; k<count; k++){
-                const n = String(k + 1).padStart(2, "0");
-
-                const x = gridMargin + (k + 1) * spacing;
-                const y = gridMargin + (k + 1) * spacing;
-
-                // TOP: B-01..B-09
-                text(`B-${n}`, x, gridMargin - out);
-
-                // BOTTOM: D-01..D-09
-                text(`D-${n}`, x, height - gridMargin + out);
-
-                // LEFT: A-01..A-09
-                text(`A-${n}`, gridMargin - out, y);
-
-                // RIGHT: C-01..C-09
-                text(`C-${n}`, width - gridMargin + out, y);
-            }
-
-            pop();
-            }
-
-
-
-        function drawStartMarker() {
-            if (!startPoint) return;
-            push();
-
-            // 기본 좌표 (그리드 위의 START 점)
-            const sx = startPoint.x;
-            const sy = startPoint.y;
-
-            // START가 서 있는 변 기준으로 바라보는 방향 계산
-            const ori = initialOrientationForStart(startPoint.i, startPoint.j);
-            const d = ORI_DIRS[ori]; // {di, dj}
-
-            // --- 위치를 그리드 "바깥" 쪽으로 살짝 이동 ---
-            const shift = 22; // 숫자 키우면 더 바깥으로 나감
-            const cx = sx - d.dj * shift;
-            const cy = sy - d.di * shift;
-
-            // --- pulsing 스케일 계산 (살짝 숨 쉬듯이) ---
-            const baseSize = 18; // 기본 삼각형 크기
-            const pulse = 1 + 0.03 * Math.sin(millis() / 300); // 0.88 ~ 1.12 정도 반복
-            const size = baseSize * pulse;
-
-            // 삼각형 꼭짓점 계산 (tip = 격자 안쪽, left/right = 바깥쪽)
-            const tipX = cx + d.dj * size;
-            const tipY = cy + d.di * size;
-            const leftX = cx + (-d.di) * size * 0.6;
-            const leftY = cy + (d.dj) * size * 0.6;
-            const rightX = cx + (d.di) * size * 0.6;
-            const rightY = cy + (-d.dj) * size * 0.6;
-
-            // 스타일 (기존 색 유지)
-            stroke(225);
-            strokeWeight(1 * pulse);   // 살짝 같이 숨 쉬는 느낌
-            fill(183, 245, 39);
-
-            triangle(tipX, tipY, leftX, leftY, rightX, rightY);
-
-            pop();
-        }
-
-        // ====== FILLED SHAPE (Disabled) ======
-        function drawFilledShape() {
-            // Colors removed as requested
-        }
-
-
-
-
-
-
-
-
-
-
-        // ====== RESULT OVERLAY (O / X) + CONFETTI ======
-        function drawResultOverlay() {
-            if (!resultMode || resultTimer <= 0) return;
-            resultTimer--;
-
-            const cx = width / 2;
-            const cy = height / 2;
-            const gridW = width - 2 * gridMargin;
-            const baseR = gridW * 0.45;
-
-            if (resultMode === "correct") {
-                noFill();
-                stroke(46, 204, 113);
-                strokeWeight(14);
-                circle(cx, cy, baseR);
-            } else if (resultMode === "wrong") {
-                stroke(220, 38, 38);
-                strokeWeight(14);
-                const r = baseR * 0.7;
-                line(cx - r, cy - r, cx + r, cy + r);
-                line(cx - r, cy + r, cx + r, cy - r);
-            }
-        }
-
-        function spawnConfetti() {
-            confetti = [];
-            const count = 200;
-            for (let i = 0; i < count; i++) {
-                confetti.push({
-                    x: random(0, width),
-                    y: random(-height, 0),
-                    vx: random(-0.5, 0.5),
-                    vy: random(2, 5),
-                    size: random(4, 8),
-                    col: color(random(200, 255), random(150, 230), random(80, 200))
-                });
-            }
-        }
-
-        function undoLastStep() {
-            if (!segments || segments.length === 0) return;
-
-            // 뒤에서부터 "실제 점이 있는" 마지막 세그먼트 찾기
-            let s = segments.length - 1;
-            while (s >= 0 && (!segments[s].points || segments[s].points.length === 0)) {
-                s--;
-            }
-            if (s < 0) return;
-
-            let seg = segments[s];
-
-            if (seg.points.length > 1) {
-                // ★ 마지막 점 하나만 제거
-                seg.points.pop();
-                currentPointIndex = seg.points[seg.points.length - 1];
-                activeSegment = seg;
-            } else {
-                // 이 세그먼트엔 점이 1개뿐 → 세그먼트 자체를 제거
-                segments.splice(s, 1);
-
-                if (segments.length === 0) {
-                    // 완전히 비어 버리면 START만 있는 기본 상태로 복원
-                    if (startPoint) {
-                        const idx = startPoint.index;
-                        const baseSeg = { points: [idx] };
-                        segments = [baseSeg];
-                        activeSegment = baseSeg;
-                        currentPointIndex = idx;
-                    } else {
-                        activeSegment = null;
-                        currentPointIndex = null;
-                    }
-                } else {
-                    // 마지막 세그먼트의 마지막 점을 현재 위치로
-                    const lastSeg = segments[segments.length - 1];
-                    if (lastSeg.points && lastSeg.points.length > 0) {
-                        activeSegment = lastSeg;
-                        currentPointIndex = lastSeg.points[lastSeg.points.length - 1];
-                    } else {
-                        activeSegment = null;
-                        currentPointIndex = null;
-                    }
-                }
-            }
-
-            // 혹시 남아 있을 수 있는 빈 세그먼트 정리
-            segments = segments.filter(seg => seg.points && seg.points.length > 0);
-
-            // 결과 표시(동그라미/X/컨페티) 초기화
-            resultMode = null;
-            resultTimer = 0;
-            confetti = [];
-
-            setStatus("undo");
-        }
-
-
-        function drawConfetti() {
-            if (!resultMode || resultMode !== "correct" || confetti.length === 0) return;
-            noStroke();
-            for (const c of confetti) {
-                fill(c.col);
-                rect(c.x, c.y, c.size, c.size);
-                c.x += c.vx;
-                c.y += c.vy;
-                if (c.y > height + 20) {
-                    c.y = random(-height, 0);
-                    c.x = random(0, width);
-                }
-            }
-        }
-
-        function initGrid() {
-            points = [];
-            let idx = 0;
-            for (let i = 0; i < GRID_SIZE; i++) {
-                for (let j = 0; j < GRID_SIZE; j++) {
-                    const x = gridMargin + j * spacing;
-                    const y = gridMargin + i * spacing;
-                    points.push({ x, y, i, j, index: idx++ });
-                }
-            }
-        }
-
-        window.addEventListener("mousedown", (e) => {
+      }
+
+      segments = segments.filter(seg => seg.points && seg.points.length > 0);
+
+      resultMode = null;
+      resultTimer = 0;
+      confettiParticles.length = 0;
+
+      setStatus("undo");
+    }
+
+    // ====== RESULT CARD OVERLAY (USED) ======
+    function showResultCard(src) {
+      const overlay = document.getElementById("resultOverlay");
+      const img = overlay.querySelector("img");
+      img.src = src;
+      overlay.classList.add("show");
+    }
+
+    function hideResultCard() {
+      const overlay = document.getElementById("resultOverlay");
+      overlay.classList.remove("show");
+    }
+
+    function bindOverlayClose() {
+      const overlay = document.getElementById("resultOverlay");
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) hideResultCard();
+      });
+    }
+
+    // ====== INK EFFECT ======
+    function bindInkEffect() {
+      window.addEventListener("mousedown", (e) => {
         const ink = document.createElement("div");
         ink.className = "ink";
         ink.style.left = e.clientX + "px";
         ink.style.top = e.clientY + "px";
         document.body.appendChild(ink);
         ink.addEventListener("animationend", () => ink.remove());
-        });
-
-
-    </script>
-
+      });
+    }
+  </script>
 </body>
-
 </html>
