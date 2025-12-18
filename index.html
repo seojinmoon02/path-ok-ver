@@ -820,30 +820,63 @@ if (window.screen.width >= 2400 && window.screen.height >= 1200) {
     }
 
     // ====== DRAW ======
-    function drawGrid() {
-      push();
+ function drawGrid() {
+  push();
 
-      noStroke();
-      fill(255, 250, 245);
-      rect(gridMargin, gridMargin, width - 2 * gridMargin, height - 2 * gridMargin);
+  // ===============================
+  // 🟧 OUTER ORANGE SIDE BANDS
+  // ===============================
+  noStroke();
+  fill(239, 65, 54); // #EF4136 (기존 아웃라인 색과 동일)
 
-      stroke(255, 200, 195);
-      strokeWeight(1);
-      drawingContext.setLineDash([4, 4]);
+  // 왼쪽 바깥 영역
+  rect(
+    0,
+    0,
+    gridMargin,
+    height
+  );
 
-      for (let i = 1; i < GRID_SIZE - 1; i++) {
-        const y = gridMargin + i * spacing;
-        line(gridMargin, y, width - gridMargin, y);
-      }
+  // 오른쪽 바깥 영역
+  rect(
+    width - gridMargin,
+    0,
+    gridMargin,
+    height
+  );
 
-      for (let j = 1; j < GRID_SIZE - 1; j++) {
-        const x = gridMargin + j * spacing;
-        line(x, gridMargin, x, height - gridMargin);
-      }
+  // ===============================
+  // 🟨 INNER GRID BACKGROUND
+  // ===============================
+  fill(255, 250, 245);
+  rect(
+    gridMargin,
+    gridMargin,
+    width - 2 * gridMargin,
+    height - 2 * gridMargin
+  );
 
-      drawingContext.setLineDash([]);
-      pop();
-    }
+  // ===============================
+  // ╌ DOTTED GRID LINES (기존 코드)
+  // ===============================
+  stroke(255, 200, 195);
+  strokeWeight(1);
+  drawingContext.setLineDash([4, 4]);
+
+  for (let i = 1; i < GRID_SIZE - 1; i++) {
+    const y = gridMargin + i * spacing;
+    line(gridMargin, y, width - gridMargin, y);
+  }
+
+  for (let j = 1; j < GRID_SIZE - 1; j++) {
+    const x = gridMargin + j * spacing;
+    line(x, gridMargin, x, height - gridMargin);
+  }
+
+  drawingContext.setLineDash([]);
+  pop();
+}
+
 
     function drawPoints() {
       push();
