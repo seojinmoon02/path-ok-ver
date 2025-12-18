@@ -858,12 +858,17 @@ if (window.screen.width >= 2400 && window.screen.height >= 1200) {
       pop();
     }
 
-      function drawSegments() {
+    function drawSegments() {
       if (!segments || segments.length === 0) return;
+
+      const imac =
+        (typeof IS_IMAC !== "undefined" && IS_IMAC) ||
+        (window.screen.width >= 2400 && window.screen.height >= 1200);
 
       push();
       stroke(239, 65, 54);
-      strokeWeight(IS_IMAC ? 10 : 5); // ⭐ iMac 전용 +5px
+      strokeWeight(imac ? 10 : 5);
+      strokeCap(imac ? ROUND : SQUARE);
       noFill();
 
       for (const seg of segments) {
@@ -877,6 +882,7 @@ if (window.screen.width >= 2400 && window.screen.height >= 1200) {
 
       pop();
     }
+
 
 
     function drawBoardLabels() {
