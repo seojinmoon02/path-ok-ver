@@ -341,10 +341,7 @@
 
     let BASE_CANVAS_SIZE = 700;
 
-// iMac-class (큰 해상도)에서만 캔버스 최대치 확장
-if (window.screen.width >= 2400 && window.screen.height >= 1200) {
-  BASE_CANVAS_SIZE = 900;
-}
+
 
     // 각 레벨별 정답 코드
     const ANSWER_CODES = {
@@ -414,6 +411,11 @@ if (window.screen.width >= 2400 && window.screen.height >= 1200) {
     let resultTimer = 0;
     let confettiParticles = [];
     let confettiBurstUntil = 0;
+
+    // iMac-class large display only
+if (window.screen.width >= 2400 && window.screen.height >= 1200) {
+  BASE_CANVAS_SIZE = 900;
+}
 
     // ====== P5 ======
     function setup() {
