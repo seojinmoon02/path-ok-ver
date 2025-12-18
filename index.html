@@ -217,7 +217,7 @@
     /* --- Large desktop (iMac-class) scaling only --- */
 @media (min-width: 2400px) and (min-height: 1200px){
   #ui{
-    width: 1080px;        /* 700 -> 880 */
+    width: 1040px;        /* 700 -> 880 */
     font-size: 16px;     /* 기본 글자 약간 확대 */
   }
 
@@ -242,7 +242,7 @@
   }
 
   main{
-    width: min(1080px, 95vw); /* 캔버스도 같이 커짐(폭 기준) */
+    width: min(1040px, 95vw); /* 캔버스도 같이 커짐(폭 기준) */
   }
 }
 
@@ -858,12 +858,12 @@ if (window.screen.width >= 2400 && window.screen.height >= 1200) {
       pop();
     }
 
-    function drawSegments() {
+      function drawSegments() {
       if (!segments || segments.length === 0) return;
 
       push();
       stroke(239, 65, 54);
-      strokeWeight(5);
+      strokeWeight(IS_IMAC ? 10 : 5); // ⭐ iMac 전용 +5px
       noFill();
 
       for (const seg of segments) {
@@ -877,6 +877,7 @@ if (window.screen.width >= 2400 && window.screen.height >= 1200) {
 
       pop();
     }
+
 
     function drawBoardLabels() {
       push();
